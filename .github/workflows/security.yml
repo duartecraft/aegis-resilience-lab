@@ -19,7 +19,7 @@ jobs:
     name: Segredos, arquivos sensíveis e endereços
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -33,7 +33,7 @@ jobs:
       run:
         working-directory: app
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - uses: actions/setup-python@v6
