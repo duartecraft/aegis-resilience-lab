@@ -1,0 +1,44 @@
+# Validação estática do Terraform. Não usa credenciais de nuvem: o init é
+# feito sem backend e nada é planejado nem aplicado.
+#
+# Antes de habilitar em um repositório remoto, fixe cada action pelo SHA do
+# commit correspondente à versão indicada, em vez da tag.
+name: terraform-validate
+
+on:
+  push:
+    branches: [main]
+    paths: ["infra/aws/terraform/**"]
+  pull_request:
+    paths: ["infra/aws/terraform/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: fmt e validate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/aws/terraform
+    env:
+      TF_VERSION: "1.13.0"
+      TF_IN_AUTOMATION: "1"
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Instalar Terraform com verificação de checksum
+        working-directory: /tmp
+        run: |
+          curl -fsSLo terraform.zip "https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip"
+          curl -fsSLo terraform.sums "https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_SHA256SUMS"
+          grep "terraform_${TF_VERSION}_linux_amd64.zip" terraform.sums | sed "s/terraform_${TF_VERSION}_linux_amd64.zip/terraform.zip/" | sha256sum -c -
+          sudo unzip -qo terraform.zip -d /usr/local/bin
+      - name: Formatação
+        run: terraform fmt -check -recursive
+      - name: Init sem backend
+        run: terraform init -backend=false
+      - name: Validate
+        run: terraform validate

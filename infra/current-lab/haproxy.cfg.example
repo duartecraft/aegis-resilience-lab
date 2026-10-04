@@ -1,0 +1,44 @@
+# Configuração do load-balancer do laboratório de origem.
+# Endereços e domínio são fictícios (RFC 1918 e example.com).
+global
+    log /dev/log local0
+    log /dev/log local1 notice
+    chroot /var/lib/haproxy
+    stats socket /run/haproxy/admin.sock mode 660 level admin
+    stats timeout 30s
+    user haproxy
+    group haproxy
+    daemon
+
+defaults
+    log global
+    mode http
+    option httplog
+    option dontlognull
+    timeout connect 5s
+    timeout client 30s
+    timeout server 30s
+    timeout http-request 10s
+    timeout check 5s
+
+frontend http_front
+    bind *:80
+    http-request redirect scheme https code 301 unless { path_beg /.well-known/acme-challenge/ }
+
+frontend https_front
+    bind *:443 ssl crt /etc/haproxy/certs/api.aegis.example.com.pem
+    http-request set-header X-Forwarded-Proto https
+    default_backend app_pool
+
+backend app_pool
+    balance roundrobin
+
+    # A aplicação só é considerada saudável se /health retornar HTTP 200.
+    option httpchk GET /health
+    http-check expect status 200
+
+    # Checagem a cada 5 segundos; sai após 3 falhas e volta após 2 sucessos.
+    default-server inter 5s fall 3 rise 2
+
+    server app-01 10.0.10.11:80 check
+    server app-02 10.0.10.12:80 check

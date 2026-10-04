@@ -1,0 +1,45 @@
+# Verificações de segurança do repositório. Não usa credenciais de nuvem.
+#
+# Antes de habilitar em um repositório remoto, fixe cada action pelo SHA do
+# commit correspondente à versão indicada, em vez da tag.
+name: security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  repository:
+    name: Segredos, arquivos sensíveis e endereços
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Verificação do repositório
+        run: bash scripts/security-check.sh
+
+  dependencies:
+    name: Auditoria de dependências
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Instalar ferramentas com verificação de hash
+        run: pip install --require-hashes -r requirements-dev.txt
+      - name: pip-audit
+        run: pip-audit --require-hashes --disable-pip -r requirements.txt

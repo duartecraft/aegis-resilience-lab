@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aegis Resilience Lab</title>
+<style>
+:root {
+  --bg:#07111f; --panel:#102642; --line:rgba(148,163,184,.18);
+  --text:#f8fafc; --muted:#a7b7cf; --cyan:#22d3ee; --green:#34d399;
+}
+* { box-sizing:border-box; }
+body {
+  min-height:100vh; margin:0; color:var(--text);
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(circle at 8% 10%,rgba(34,211,238,.17),transparent 28rem),
+    radial-gradient(circle at 88% 12%,rgba(59,130,246,.18),transparent 31rem),
+    var(--bg);
+}
+main { width:min(1060px,calc(100% - 36px)); margin:auto; padding:42px 0; }
+header, section {
+  border:1px solid var(--line); border-radius:22px; background:rgba(16,38,66,.76);
+  backdrop-filter:blur(16px);
+}
+header { padding:20px 24px; display:flex; justify-content:space-between; gap:20px; }
+.brand { font-weight:800; letter-spacing:.02em; }
+.env { color:var(--muted); font-size:.86rem; }
+.hero { padding:52px 28px; margin:22px 0; }
+.eyebrow { color:#b7f7e4; text-transform:uppercase; font-size:.82rem; font-weight:800; letter-spacing:.1em; }
+h1 { max-width:760px; margin:14px 0; font-size:clamp(2.2rem,6vw,4.5rem); line-height:1; letter-spacing:-.06em; }
+h1 span { color:var(--cyan); }
+p { color:var(--muted); line-height:1.65; }
+.grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.card { padding:22px; }
+.label { color:var(--muted); font-size:.76rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
+.value { margin-top:10px; font-size:1.12rem; font-weight:800; }
+button {
+  margin-top:22px; border:0; border-radius:12px; padding:13px 16px; cursor:pointer;
+  background:linear-gradient(135deg,var(--cyan),#38bdf8); color:#04101c; font-weight:900;
+}
+#result { margin-left:12px; color:#b7f7e4; font-family:ui-monospace,monospace; }
+footer { padding-top:28px; color:var(--muted); font-size:.85rem; }
+@media(max-width:720px) { header { flex-direction:column; } .grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="brand">◆ Aegis Resilience Lab</div>
+    <div class="env">LABORATÓRIO · MONÓLITO CONTAINERIZADO · HTTPS</div>
+  </header>
+  <section class="hero">
+    <div class="eyebrow">● Serviço operacional</div>
+    <h1>Resiliência não é sorte.<br><span>É arquitetura.</span></h1>
+    <p>API FastAPI containerizada, replicada em duas instâncias atrás de um balanceador de carga e conectada a um PostgreSQL privado.</p>
+    <button id="check">Verificar plataforma</button>
+    <span id="result">Pronto para verificar.</span>
+  </section>
+  <div class="grid">
+    <section class="card"><div class="label">Nó que respondeu</div><div class="value">{{NODE}}</div></section>
+    <section class="card"><div class="label">Versão</div><div class="value">{{VERSION}}</div></section>
+    <section class="card"><div class="label">Horário UTC</div><div class="value">{{NOW}}</div></section>
+  </div>
+  <footer>Load balancer → aplicação → PostgreSQL · <code>/health</code> · <code>/ready</code> · <code>/api/status</code></footer>
+</main>
+<script>
+document.getElementById('check').addEventListener('click', async () => {
+  const output = document.getElementById('result');
+  output.textContent = 'Verificando…';
+  try {
+    const response = await fetch('/api/status', {cache:'no-store'});
+    const data = await response.json();
+    output.textContent = data.database.connected
+      ? `✓ ${data.node}: banco conectado`
+      : `✕ ${data.node}: banco indisponível`;
+  } catch (error) {
+    output.textContent = '✕ Falha ao consultar a API';
+  }
+});
+</script>
+</body>
+</html>

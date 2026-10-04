@@ -1,0 +1,32 @@
+# Segredos e material criptográfico
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+.forbidden-terms
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Terraform
+terraform.tfstate
+terraform.tfstate.*
+.terraform/
+*.tfvars
+!*.tfvars.example
+*.tfplan
+crash.log
+
+# Diversos
+logs/
+*.log
+.DS_Store

@@ -1,0 +1,75 @@
+# Uso local, com PostgreSQL descartável:
+#   cp .env.example .env
+#   docker compose --profile local-db up --build -d
+#
+# Uso nas instâncias do laboratório (banco externo): defina DB_HOST no .env e
+# suba apenas o serviço da aplicação:
+#   docker compose up --build -d
+name: aegis-resilience-lab
+
+services:
+  app:
+    build: .
+    image: aegis-resilience-lab/app:${APP_VERSION:-1.1.0}
+    restart: unless-stopped
+    # Somente as variáveis da aplicação: as credenciais de administrador do
+    # banco não são expostas a este contêiner.
+    environment:
+      APP_NODE: ${APP_NODE:-}
+      APP_VERSION: ${APP_VERSION:-1.1.0}
+      DB_HOST: ${DB_HOST:-}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-}
+      DB_USER: ${DB_USER:-}
+      DB_PASSWORD: ${DB_PASSWORD:-}
+      DB_SSLMODE: ${DB_SSLMODE:-prefer}
+      DB_SSLROOTCERT: ${DB_SSLROOTCERT:-}
+      DATABASE_URL: ${DATABASE_URL:-}
+      EVENTS_API_TOKEN: ${EVENTS_API_TOKEN:-}
+    ports:
+      - "127.0.0.1:8000:8000"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  postgres:
+    profiles: ["local-db"]
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-aegis}
+      POSTGRES_USER: ${DB_ADMIN_USER:-}
+      POSTGRES_PASSWORD: ${DB_ADMIN_PASSWORD:-}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_ADMIN_USER:-} -d ${DB_NAME:-aegis}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Aplica o schema e cria o usuário de aplicação sem DDL. Executa e termina.
+  migrate:
+    profiles: ["local-db"]
+    build: .
+    image: aegis-resilience-lab/app:${APP_VERSION:-1.1.0}
+    command: ["python", "-m", "app.migrate"]
+    environment:
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-aegis}
+      DB_SSLMODE: ${DB_SSLMODE:-prefer}
+      DB_USER: ${DB_ADMIN_USER:-}
+      DB_PASSWORD: ${DB_ADMIN_PASSWORD:-}
+      APP_DB_USER: ${DB_USER:-}
+      APP_DB_PASSWORD: ${DB_PASSWORD:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:

@@ -1,0 +1,27 @@
+# Executor do laboratório: roda o Terraform e o build da imagem dentro da
+# própria conta, sem chaves de acesso de longa duração. A ação é escolhida
+# pela variável ACTION a cada execução.
+version: 0.2
+
+env:
+  variables:
+    TF_VERSION: "1.13.0"
+    TF_IN_AUTOMATION: "1"
+    TF_INPUT: "0"
+    ACTION: "validate"
+
+phases:
+  install:
+    commands:
+      - curl -fsSLo /tmp/terraform.zip "https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip"
+      - curl -fsSLo /tmp/terraform.sums "https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_SHA256SUMS"
+      - (cd /tmp && grep "terraform_${TF_VERSION}_linux_amd64.zip" terraform.sums | sed "s/terraform_${TF_VERSION}_linux_amd64.zip/terraform.zip/" | sha256sum -c -)
+      - unzip -qo /tmp/terraform.zip -d /usr/local/bin
+      - terraform version
+  pre_build:
+    commands:
+      - mkdir -p repo
+      - aws s3 sync "s3://${RUNNER_BUCKET}/src/" repo --delete --only-show-errors
+  build:
+    commands:
+      - cd repo && bash infra/aws/runner/run.sh

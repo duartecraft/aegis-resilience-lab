@@ -1,0 +1,25 @@
+# Laboratório efêmero: ligado por poucas horas e destruído em seguida.
+# Copie para terraform.tfvars (ignorado pelo Git). Não coloque segredos aqui:
+# as credenciais são geradas pela própria infraestrutura.
+
+environment = "dev"
+owner       = "seu-nome"
+
+# --- Interruptores de custo: cada item abaixo gera cobrança por hora ---
+nat_gateway_mode     = "single" # none | single | per_az
+enable_database      = true
+enable_load_balancer = true
+enable_service       = true
+
+# --- Sem custo relevante ---
+enable_alarms     = true
+enable_cloudtrail = true
+enable_budget     = true
+budget_limit_usd  = 20
+alert_email       = "voce@example.com"
+
+# --- Concessões de laboratório ---
+force_destroy            = true  # permite destruir tudo sem retenção
+db_multi_az              = false # ligar durante a janela de teste de failover
+db_backup_retention_days = 1
+db_deletion_protection   = false
