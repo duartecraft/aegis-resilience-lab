@@ -40,7 +40,7 @@ jobs:
       # Credencial descartável do contêiner de teste, válida apenas neste job.
       TEST_DATABASE_URL: postgresql://postgres:ci-only@127.0.0.1:5432/aegis_test
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - uses: actions/setup-python@v6
@@ -61,7 +61,7 @@ jobs:
     name: Scripts de shell
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: ShellCheck
@@ -71,7 +71,7 @@ jobs:
     name: Build da imagem (sem publicar)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Build
